@@ -1,6 +1,6 @@
 # Multimodal-yolo
 # **📝 自訂 Function 及 修改內容整理**
-## **📌 你新增的 Function**
+## **📌 新增 Function**
 | **Function 名稱** | **功能** | **所在檔案** |
 |-------------------|---------|-------------|
 | `_setup_fusion_img(batch, fusion_path)` | 透過影像路徑讀取融合影像，並將 `batch["fusion_path"]` 轉換為 list | `trainer.py` |
