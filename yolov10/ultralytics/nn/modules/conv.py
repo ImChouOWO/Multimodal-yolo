@@ -34,28 +34,42 @@ def autopad(k, p=None, d=1):  # kernel, padding, dilation
     return p
 
 class MultiConv(nn.Module):
-    """TODO
-    1.maxpool
-    2.fusion two feature map in one
-    3.reshape feature map to 6 dimention
+    """ 
+    1. MaxPool2d
+    2. Fusion two feature maps
+    3. Reshape feature map to 6D
     """
     def __init__(self, c1, c2, k=1, p=None, g=1, act=True):
         super().__init__()
-        self.conv = nn.Conv2d(in_channels=c1, out_channels=c2, kernel_size=3)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=3)
+        self.conv = nn.Conv2d(in_channels=c1, out_channels=c2, kernel_size=3,padding=1)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)
+        self.conv2 = nn.Conv2d(in_channels=c2*2, out_channels=c2, kernel_size=6, padding=1, stride=1)
 
-
-    
     def forward(self, x, x2):
-        if x2 == None:
-            print("x2 is none")
+        # if torch.equal(x,x2):
+        #     print("x1 x2 is same")
+        # else:
+        #     print("not same")
+        if x2 is None :
+            x2 = x.clone()
+
+        # # **先進行 maxpool**
         x = self.maxpool(x)
         x2 = self.maxpool(x2)
+
+        # **確保尺寸匹配**
+        if x.shape[-2:] != x2.shape[-2:]:
+            print(f"Resizing x2 from {x2.shape} to {x.shape}")
+            x2 = torch.nn.functional.interpolate(x2, size=x.shape[-2:], mode="nearest")
+
         x = self.conv(x)
         x2 = self.conv(x2)
-        
 
-        return torch.cat([x,x2],dim=1)
+
+        # **確保拼接前尺寸一致**
+        assert x.shape == x2.shape, f"Shape mismatch before cat: {x.shape} vs {x2.shape}"
+        x = torch.cat([x, x2], dim=1)
+        return self.conv2(x)
         
  
 class Conv(nn.Module):
