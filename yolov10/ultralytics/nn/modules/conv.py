@@ -34,16 +34,28 @@ def autopad(k, p=None, d=1):  # kernel, padding, dilation
     return p
 
 class MultiConv(nn.Module):
+    """TODO
+    1.maxpool
+    2.fusion two feature map in one
+    3.reshape feature map to 6 dimention
+    """
     def __init__(self, c1, c2, k=1, p=None, g=1, act=True):
         super().__init__()
         self.conv = nn.Conv2d(in_channels=c1, out_channels=c2, kernel_size=3)
-        
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=3)
+
 
     
     def forward(self, x, x2):
+        if x2 == None:
+            print("x2 is none")
+        x = self.maxpool(x)
+        x2 = self.maxpool(x2)
         x = self.conv(x)
         x2 = self.conv(x2)
-        return x
+        
+
+        return torch.cat([x,x2],dim=1)
         
  
 class Conv(nn.Module):
