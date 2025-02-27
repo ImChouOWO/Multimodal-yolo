@@ -257,16 +257,32 @@ class BaseTrainer:
        
         # 定義 torchvision 變換 (與 batch["img"] 保持一致)
         transform = T.Compose([
+            T.Resize((batch["img"].shape[-2], batch["img"].shape[-1])),
             T.ToTensor(),  # 轉換為 PyTorch 張量
         ])
 
+        #確保batch["fusion_path"]為list
+        if isinstance(batch["fusion_path"], str):
+            batch["fusion_path"] = [batch["fusion_path"]]
         fusion_tensor_list = []
         
         for img_path in batch["fusion_path"]:
             img = cv2.imread(img_path)  # 讀取影像
+            if img is None:
+                print("找不到影像")
+                continue
+
             img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))  # 轉換為 PIL 格式
             img = transform(img)  # 轉換為張量 (C, H, W)
             fusion_tensor_list.append(img)
+
+        if len(fusion_tensor_list) == 0:
+            raise RuntimeError("❌ 沒有可用的 fusion 影像，請檢查路徑是否正確！")
+
+        shapes = [img.shape for img in fusion_tensor_list]
+        if len(set(shapes)) > 1:
+            print("❌ 警告: fusion 影像大小不一致，調整所有影像大小！")
+            fusion_tensor_list = [T.Resize((batch["img"].shape[-2], batch["img"].shape[-1]))(img) for img in fusion_tensor_list]
         
         # 將 List of Tensors 堆疊成 4D 張量 (B, C, H, W)
         batch["fusion_tensor"] = torch.stack(fusion_tensor_list, dim=0)  # 確保 shape 正確
@@ -331,7 +347,6 @@ class BaseTrainer:
         batch_size = self.batch_size // max(world_size, 1)
         # 獲取批次大小數量的圖像
         self.train_loader = self.get_dataloader(self.trainset, batch_size=batch_size, rank=RANK, mode="train")
-        # self.fusion_loader = self._setup_fusion_img(self.train_loader, self.fusionset )
         if RANK in (-1, 0):
             # Note: When training DOTA dataset, double batch size could get OOM on images with >2000 objects.
             self.test_loader = self.get_dataloader(

@@ -177,6 +177,7 @@ class BaseValidator:
             with dt[1]:
                 preds = model(batch["img"], augment=augment)
 
+
             # Loss
             with dt[2]:
                 if self.training:

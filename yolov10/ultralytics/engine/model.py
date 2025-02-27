@@ -143,6 +143,7 @@ class Model(nn.Module):
     def __call__(
         self,
         source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
+        x2: torch.Tensor = None,
         stream: bool = False,
         **kwargs,
     ) -> list:
@@ -163,7 +164,7 @@ class Model(nn.Module):
         Returns:
             (List[ultralytics.engine.results.Results]): A list of prediction results, encapsulated in the Results class.
         """
-        return self.predict(source, stream, **kwargs)
+        return self.predict(source, stream , x2=x2, **kwargs)
 
     @staticmethod
     def _get_hub_session(model: str):
@@ -387,6 +388,7 @@ class Model(nn.Module):
         source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
         stream: bool = False,
         predictor=None,
+        x2: torch.Tensor =None,
         **kwargs,
     ) -> list:
         """
@@ -438,7 +440,7 @@ class Model(nn.Module):
                 self.predictor.save_dir = get_save_dir(self.predictor.args)
         if prompts and hasattr(self.predictor, "set_prompts"):  # for SAM-type models
             self.predictor.set_prompts(prompts)
-        return self.predictor.predict_cli(source=source) if is_cli else self.predictor(source=source, stream=stream)
+        return self.predictor.predict_cli(source=source, x2=x2) if is_cli else self.predictor(source=source,x2=x2 ,stream=stream)
 
     def track(
         self,

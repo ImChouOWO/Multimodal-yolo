@@ -80,7 +80,7 @@ except ImportError:
 class BaseModel(nn.Module):
     """The BaseModel class serves as a base class for all the models in the Ultralytics YOLO family."""
 
-    def forward(self, x, x2, *args, **kwargs):
+    def forward(self, x, x2=None, *args, **kwargs):
         """
         Forward pass of the model on a single scale. Wrapper for `_forward_once` method.
 
@@ -90,11 +90,14 @@ class BaseModel(nn.Module):
         Returns:
             (torch.Tensor): The output of the network.
         """
+        if x2 == None:
+            # print("x2 Not found, clone x")
+            x2 = x.clone()
         if isinstance(x, dict):  # for cases of training and validating while training.
             return self.loss(x, *args, **kwargs)
         return self.predict(x, x2, *args, **kwargs)
 
-    def predict(self, x, profile=False, visualize=False, augment=False, embed=None):
+    def predict(self, x, x2=None, profile=False, visualize=False, augment=False, embed=None):
         """
         Perform a forward pass through the network.
 
@@ -109,8 +112,8 @@ class BaseModel(nn.Module):
             (torch.Tensor): The last output of the model.
         """
         if augment:
-            return self._predict_augment(x)
-        return self._predict_once(x, profile, visualize, embed)
+            return self._predict_augment(x,x2)
+        return self._predict_once(x,x2, profile, visualize, embed)
 
     def _predict_once(self, x, x2=None, profile=False, visualize=False, embed=None):
         """
@@ -147,7 +150,7 @@ class BaseModel(nn.Module):
                     return torch.unbind(torch.cat(embeddings, 1), dim=0)
         return x
 
-    def _predict_augment(self, x):
+    def _predict_augment(self, x,x2):
         """Perform augmentations on input image x and return augmented inference."""
         LOGGER.warning(
             f"WARNING ⚠️ {self.__class__.__name__} does not support augmented inference yet. "
@@ -278,7 +281,7 @@ class BaseModel(nn.Module):
         if not hasattr(self, "criterion"):
             self.criterion = self.init_criterion()
 
-        preds = self.forward(batch["img"], batch["fusion_tensor"]) if preds is None else preds
+        preds = self.forward(batch["img"], batch.get('fusion_tensor', None)) if preds is None else preds
         return self.criterion(preds, batch)
 
     def init_criterion(self):
@@ -323,7 +326,7 @@ class DetectionModel(BaseModel):
             self.info()
             LOGGER.info("")
 
-    def _predict_augment(self, x):
+    def _predict_augment(self, x,x2):
         """Perform augmentations on input image x and return augmented inference and train outputs."""
         img_size = x.shape[-2:]  # height, width
         s = [1, 0.83, 0.67]  # scales
