@@ -11,7 +11,7 @@ if __name__ == '__main__':
     model = YOLOv10('C:/project/Multimodal-yolo/yolov10/ultralytics/cfg/models/v10/yolov10n.yaml')
    
 
-    # # # 檢查是否有已保存的權重，並載入
+    # 檢查是否有已保存的權重，並載入
     weights_path = 'C:/project/Multimodal-yolo/yolov8n.pt'
     if os.path.exists(weights_path):
         model.load(weights_path)  # 使用 model.load 載入已保存的權重

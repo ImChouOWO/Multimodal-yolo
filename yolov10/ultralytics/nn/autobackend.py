@@ -398,7 +398,7 @@ class AutoBackend(nn.Module):
 
         self.__dict__.update(locals())  # assign all variables to self
 
-    def forward(self, im, augment=False, visualize=False, embed=None):
+    def forward(self, im, x2 =None, augment=False, visualize=False, embed=None):
         """
         Runs inference on the YOLOv8 MultiBackend model.
 
@@ -412,14 +412,23 @@ class AutoBackend(nn.Module):
             (tuple): Tuple containing the raw output tensor, and processed output for visualization (if visualize=True)
         """
         b, ch, h, w = im.shape  # batch, channel, height, width
+        
         if self.fp16 and im.dtype != torch.float16:
             im = im.half()  # to FP16
+            if x2 is not None and x2.dtype != torch.float16:
+                x2 =x2.half()
+            if x2 is None:
+                print("fusion image is not defind")
         if self.nhwc:
             im = im.permute(0, 2, 3, 1)  # torch BCHW to numpy BHWC shape(1,320,192,3)
-
+            if x2 is not None:
+                x2 = x2.permute(0, 2, 3, 1)
         # PyTorch
         if self.pt or self.nn_module:
-            y = self.model(im, augment=augment, visualize=visualize, embed=embed)
+            if x2 is None:
+                y = self.model(im, x2=im, augment=augment, visualize=visualize, embed=embed)
+            else:
+                y = self.model(im, x2=x2, augment=augment, visualize=visualize, embed=embed)
 
         # TorchScript
         elif self.jit:

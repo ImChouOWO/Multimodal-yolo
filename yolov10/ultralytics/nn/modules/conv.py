@@ -53,7 +53,7 @@ class MultiConv(nn.Module):
         if x2 is None :
             x2 = x.clone()
 
-        # # **先進行 maxpool**
+        # **先進行 maxpool**
         x = self.maxpool(x)
         x2 = self.maxpool(x2)
 

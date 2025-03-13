@@ -91,7 +91,7 @@ class BaseModel(nn.Module):
             (torch.Tensor): The output of the network.
         """
         if x2 == None:
-            # print("x2 Not found, clone x")
+            print("x2 Not found, clone x")
             x2 = x.clone()
         if isinstance(x, dict):  # for cases of training and validating while training.
             return self.loss(x, *args, **kwargs)
@@ -130,6 +130,7 @@ class BaseModel(nn.Module):
         """
         y, dt, embeddings = [], [], []  # outputs
         if x2 == None:
+            print("clone x1")
             x2 = x.clone()
         for m in self.model:
             if m.f != -1:  # if not from previous layer
@@ -138,6 +139,7 @@ class BaseModel(nn.Module):
             if profile:
                 self._profile_one_layer(m, x, dt)
             if isinstance(m, MultiConv):
+                print("predict by 2 img")
                 x = m(x, x2)
             else:
                 x = m(x)  # run

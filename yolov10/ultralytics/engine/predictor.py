@@ -119,27 +119,32 @@ class BasePredictor:
         Args:
             im (torch.Tensor | List(np.ndarray)): BCHW for tensor, [(HWC) x B] for list.
         """
+        if isinstance(im, str):
+            im =cv2.imread(im)
+            assert im is not None, f"Image not found: {im}"
+        if isinstance(im, np.ndarray) and im.ndim == 3:
+            im = np.expand_dims(im, axis=0)
         not_tensor = not isinstance(im, torch.Tensor)
         if not_tensor:
             im = np.stack(self.pre_transform(im))
             im = im[..., ::-1].transpose((0, 3, 1, 2))  # BGR to RGB, BHWC to BCHW, (n, 3, h, w)
             im = np.ascontiguousarray(im)  # contiguous
             im = torch.from_numpy(im)
-
+        
         im = im.to(self.device)
         im = im.half() if self.model.fp16 else im.float()  # uint8 to fp16/32
         if not_tensor:
             im /= 255  # 0 - 255 to 0.0 - 1.0
         return im
 
-    def inference(self, im, *args, **kwargs):
+    def inference(self, im, x2=None, *args, **kwargs):
         """Runs inference on a given image using the specified model and arguments."""
         visualize = (
             increment_path(self.save_dir / Path(self.batch[0][0]).stem, mkdir=True)
             if self.args.visualize and (not self.source_type.tensor)
             else False
         )
-        return self.model(im, augment=self.args.augment, visualize=visualize, embed=self.args.embed, *args, **kwargs)
+        return self.model(im, x2=x2, augment=self.args.augment, visualize=visualize, embed=self.args.embed, *args, **kwargs)
 
     def pre_transform(self, im):
         """
@@ -159,13 +164,13 @@ class BasePredictor:
         """Post-processes predictions for an image and returns them."""
         return preds
 
-    def __call__(self, source=None, model=None, stream=False, *args, **kwargs):
+    def __call__(self, source=None, model=None, stream=False, x2=None, *args, **kwargs):
         """Performs inference on an image or stream."""
         self.stream = stream
         if stream:
-            return self.stream_inference(source, model, *args, **kwargs)
+            return self.stream_inference(source, model, x2=x2, *args, **kwargs)
         else:
-            return list(self.stream_inference(source, model, *args, **kwargs))  # merge list of Result into one
+            return list(self.stream_inference(source, model, x2=x2, *args, **kwargs))  # merge list of Result into one
 
     def predict_cli(self, source=None, model=None):
         """
@@ -206,7 +211,7 @@ class BasePredictor:
         self.vid_writer = {}
 
     @smart_inference_mode()
-    def stream_inference(self, source=None, model=None, *args, **kwargs):
+    def stream_inference(self, source=None, model=None, x2=None, *args, **kwargs):
         """Streams real-time inference on camera feed and saves results to file."""
         if self.args.verbose:
             LOGGER.info("")
@@ -244,15 +249,19 @@ class BasePredictor:
                     im = self.preprocess(im0s)
 
                 # Inference
+                if x2 is None:
+                    print("fusion tensor is not defind")
                 with profilers[1]:
-                    preds = self.inference(im, *args, **kwargs)
+                    x2 = self.preprocess(x2) if x2 is not None else None
+
+                    preds = self.inference(im, x2, *args, **kwargs)
                     if self.args.embed:
                         yield from [preds] if isinstance(preds, torch.Tensor) else preds  # yield embedding tensors
                         continue
 
                 # Postprocess
                 with profilers[2]:
-                    self.results = self.postprocess(preds, im, im0s)
+                    self.results = self.postprocess(preds["one2one"], im, im0s)
                 self.run_callbacks("on_predict_postprocess_end")
 
                 # Visualize, save, write results
