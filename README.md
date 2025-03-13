@@ -47,12 +47,15 @@
 4. **autobackend.forward()確保 支援x2 **
    - 將融合張量的格式與目標張量一致
    - 修改self.model傳遞x2參數
-5. **predictor新增x2**
+5. **predictor**
    - `inference()、forward()、predict()、predict_cli()`加入x2參數
    - 指定one2one傳遞於postprocess
-6. **task.py 新增x2**   
+6. **task.py**   
    - `_predict_once`
    - `predict`
    - `forward`
 
-這些修改確保 `batch["fusion_tensor"]` **可以正常傳遞**，避免 shape mismatch 和 RuntimeError，讓 `fusion_tensor` **成功參與 YOLO 訓練和推理**。🚀
+## **實現功能**
+- 使用多圖像輸入訓練
+- 使用多圖像輸入推論
+- 單圖像驗證
