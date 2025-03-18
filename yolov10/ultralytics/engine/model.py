@@ -143,7 +143,7 @@ class Model(nn.Module):
     def __call__(
         self,
         source: Union[str, Path, int, list, tuple, np.ndarray, torch.Tensor] = None,
-        x2: torch.Tensor = None,
+        x2: torch.Tensor = None, #fusion image tensor
         stream: bool = False,
         **kwargs,
     ) -> list:

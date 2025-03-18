@@ -411,6 +411,13 @@ class AutoBackend(nn.Module):
         Returns:
             (tuple): Tuple containing the raw output tensor, and processed output for visualization (if visualize=True)
         """
+
+        """modify function
+        1.x2's tensor will be processed as im
+        2.self.model will recived two paramets im and x2, then use to predict bbox.
+        3.TODO:add x2 into another deeplearning methods(TorchScript,ONNX...) 
+        """
+        
         b, ch, h, w = im.shape  # batch, channel, height, width
         
         if self.fp16 and im.dtype != torch.float16:

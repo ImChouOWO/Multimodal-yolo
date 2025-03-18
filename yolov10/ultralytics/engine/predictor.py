@@ -213,6 +213,14 @@ class BasePredictor:
     @smart_inference_mode()
     def stream_inference(self, source=None, model=None, x2=None, *args, **kwargs):
         """Streams real-time inference on camera feed and saves results to file."""
+
+        """modify function 
+         
+        1.x2 is fusion image's tensor format in this part
+        2.im is the input image in original yolo.
+        3.paramet 'pred' will return one dict include one2one and one2many
+        """
+        
         if self.args.verbose:
             LOGGER.info("")
 
@@ -245,15 +253,15 @@ class BasePredictor:
                 paths, im0s, s = self.batch
 
                 # Preprocess
+                # x2 will be preprocessed as same as im
                 with profilers[0]:
                     im = self.preprocess(im0s)
-
-                # Inference
-                if x2 is None:
-                    print("fusion tensor is not defind")
-                with profilers[1]:
+                    if x2 is None:
+                        print("fusion tensor is not defind")
                     x2 = self.preprocess(x2) if x2 is not None else None
 
+                # Inference
+                with profilers[1]:
                     preds = self.inference(im, x2, *args, **kwargs)
                     if self.args.embed:
                         yield from [preds] if isinstance(preds, torch.Tensor) else preds  # yield embedding tensors
@@ -261,6 +269,7 @@ class BasePredictor:
 
                 # Postprocess
                 with profilers[2]:
+                    #useing one2one mode to predict
                     self.results = self.postprocess(preds["one2one"], im, im0s)
                 self.run_callbacks("on_predict_postprocess_end")
 
