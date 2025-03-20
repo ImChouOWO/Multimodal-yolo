@@ -140,7 +140,7 @@ class BaseModel(nn.Module):
                 self._profile_one_layer(m, x, dt)
             if isinstance(m, MultiConv):
                 # print("predict by 2 img")
-                if x == x2 :
+                if torch.equal(x,x2):
                     print("x is as same as x2")
                 x = m(x, x2)
             else:
