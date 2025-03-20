@@ -139,7 +139,9 @@ class BaseModel(nn.Module):
             if profile:
                 self._profile_one_layer(m, x, dt)
             if isinstance(m, MultiConv):
-                print("predict by 2 img")
+                # print("predict by 2 img")
+                if x == x2 :
+                    print("x is as same as x2")
                 x = m(x, x2)
             else:
                 x = m(x)  # run
