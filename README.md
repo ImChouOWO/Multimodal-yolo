@@ -3,8 +3,8 @@
 ## **📌 新增 Function**
 | **Function 名稱** | **功能** | **所在檔案** |
 |-------------------|---------|-------------|
-| `_setup_fusion_img(batch, fusion_path)` | 透過影像路徑讀取融合影像，並將 `batch["fusion_path"]` 轉換為 list | `trainer.py` |
-| `_fusion_process(batch)` | 讀取 `batch["fusion_path"]` 的影像，將其轉換為 PyTorch Tensor 並存入 `batch["fusion_tensor"]` | `trainer.py` |
+| `_setup_fusion_img(batch, fusion_path)` | 透過影像路徑讀取融合影像，並將 `batch["fusion_path"]` 轉換為 list | `engine/trainer.py` |
+| `_fusion_process(batch)` | 讀取 `batch["fusion_path"]` 的影像，將其轉換為 PyTorch Tensor 並存入 `batch["fusion_tensor"]` | `engine/trainer.py` |
 | `BaseModel.forward(x, x2=None, *args, **kwargs)` | 修改 `forward()` 讓 `x2` (fusion_tensor) 參與前向傳播 | `nn/tasks.py` |
 | `MultiConv.forward(x, x2)` | 在 `MultiConv` 中加入 `fusion_tensor` 的 maxpool、conv 運算，並確保尺寸匹配 | `nn/modules/conv.py` |
 
