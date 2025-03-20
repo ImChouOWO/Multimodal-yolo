@@ -90,9 +90,21 @@ class BaseModel(nn.Module):
         Returns:
             (torch.Tensor): The output of the network.
         """
-        if x2 == None or torch.equal(x,x2):
-            print("x2 Not found, clone x")
-            x2 = x.clone()
+       
+        try:
+            if isinstance(x,dict):
+                assert isinstance(x2, torch.Tensor), "x2 is not a valid Tensor"
+                assert isinstance(x.get('img'), torch.Tensor), "x['img'] is not a valid Tensor"
+                if torch.equal(x2, x['img']) or x2 ==None:
+                    x2 = x['fusion_tensor']
+
+        except Exception as e:
+            print(f"❗ Exception caught: {e}")
+            print(f"x2 type: {type(x2)}, x['img'] type: {type(x['img'])}")
+            print(f"x2 dtype: {x2.dtype}, x['img'] dtype: {x['img'].dtype}")
+            print(f"x2 shape: {x2.shape}, x['img'] shape: {x['img'].shape}")
+
+
         if isinstance(x, dict):  # for cases of training and validating while training.
             return self.loss(x, *args, **kwargs)
         return self.predict(x, x2, *args, **kwargs)
@@ -138,7 +150,8 @@ class BaseModel(nn.Module):
                 self._profile_one_layer(m, x, dt)
             if isinstance(m, MultiConv):
                 if x2 == None:
-                    print("clone x1")
+                    if not isinstance(x, dict):
+                        print("test state clone x as x2")
                     x2 = x.clone()
                 x = m(x, x2)
             else:

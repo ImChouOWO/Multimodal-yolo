@@ -22,7 +22,7 @@ if __name__ == '__main__':
     # # 開始訓練
     model.train(
         data='C:/project/Multimodal-yolo/dataset/data.yaml',  # 路徑到您的數據集 YAML 文件
-        epochs=1,  # 訓練輪數
+        epochs=10,  # 訓練輪數
         batch=16,  # 批次大小（可根據需求調整）
         imgsz=512,  # 圖片尺寸
         device="cuda",  # GPU 設備編號（如果有多個 GPU，可以用 '0,1' 等方式指定多個）
