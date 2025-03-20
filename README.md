@@ -13,9 +13,9 @@
 ## **🛠 修改項目**
 | **修改項目** | **修改內容** | **Note** |
 |-------------|------------|-------------|
-| **trainer.py** `_do_train()` | 確保 `batch["fusion_tensor"]` 被正確載入並傳遞到 `self.model()` | `trainer.py` |
-| **trainer.py** `_setup_fusion_img()` | 確保 `batch["fusion_path"]` 是 list，避免 `NoneType` 錯誤 | `trainer.py` |
-| **trainer.py** `_fusion_process()` | 確保 `batch["fusion_tensor"]` 形狀一致，避免 `RuntimeError` | `trainer.py` |
+| **trainer.py** `_do_train()` | 確保 `batch["fusion_tensor"]` 被正確載入並傳遞到 `self.model()` | `engine/trainer.py` |
+| **trainer.py** `_setup_fusion_img()` | 確保 `batch["fusion_path"]` 是 list，避免 `NoneType` 錯誤 | `engine/trainer.py` |
+| **trainer.py** `_fusion_process()` | 確保 `batch["fusion_tensor"]` 形狀一致，避免 `RuntimeError` | `engine/trainer.py` |
 | **BaseModel.forward()** | 讓 `batch["fusion_tensor"]` 參與 `predict()`，並在 `x2=None` 時複製 `x` | `nn/tasks.py` |
 | **MultiConv.forward()** | 確保 `x` 和 `x2` 經過 pooling、conv 後仍然匹配，避免 `torch.cat()` shape 錯誤 | `nn/modules/conv.py` |
 | **nn/model.py**|於`__call__` `predict()`中加入參數 `x2`|確保融合圖像能夠正確傳輸|
