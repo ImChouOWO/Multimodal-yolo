@@ -12,17 +12,17 @@ if __name__ == '__main__':
    
 
     # 檢查是否有已保存的權重，並載入
-    weights_path = 'C:/project/Multimodal-yolo/yolov8n.pt'
-    if os.path.exists(weights_path):
-        model.load(weights_path)  # 使用 model.load 載入已保存的權重
-        print(f"成功載入權重: {weights_path}") 
+    # weights_path = 'C:/project/Multimodal-yolo/yolov8n.pt'
+    # if os.path.exists(weights_path):
+    #     model.load(weights_path)  # 使用 model.load 載入已保存的權重
+    #     print(f"成功載入權重: {weights_path}") 
     # else:
     #     print("未找到已保存的權重，從頭開始訓練。")
 
     # # 開始訓練
     model.train(
         data='C:/project/Multimodal-yolo/dataset/data.yaml',  # 路徑到您的數據集 YAML 文件
-        epochs=10,  # 訓練輪數
+        epochs=100,  # 訓練輪數
         batch=16,  # 批次大小（可根據需求調整）
         imgsz=512,  # 圖片尺寸
         device="cuda",  # GPU 設備編號（如果有多個 GPU，可以用 '0,1' 等方式指定多個）

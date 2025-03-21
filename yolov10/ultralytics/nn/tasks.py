@@ -171,7 +171,7 @@ class BaseModel(nn.Module):
             f"WARNING ⚠️ {self.__class__.__name__} does not support augmented inference yet. "
             f"Reverting to single-scale inference instead."
         )
-        return self._predict_once(x)
+        return self._predict_once(x,x2)
 
     def _profile_one_layer(self, m, x, dt):
         """

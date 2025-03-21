@@ -417,10 +417,11 @@ class AutoBackend(nn.Module):
         2.self.model will recived two paramets im and x2, then use to predict bbox.
         3.TODO:add x2 into another deeplearning methods(TorchScript,ONNX...) 
         """
-        if torch.equal(im,x2):
-            print("x2 is equal to x")
-        else:
-            print("load fusion image sucess")
+        if isinstance(x2, torch.Tensor):
+            if torch.equal(im,x2):
+                print("x2 is equal to x")
+            else:
+                print("load fusion image sucess")
             
         b, ch, h, w = im.shape  # batch, channel, height, width
         
