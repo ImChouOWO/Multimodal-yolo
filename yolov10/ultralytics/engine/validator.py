@@ -118,6 +118,7 @@ class BaseValidator:
             # self.model = model
             self.loss = torch.zeros_like(trainer.loss_items, device=trainer.device)
             self.args.plots &= trainer.stopper.possible_stop or (trainer.epoch == trainer.epochs - 1)
+            # get fusionset path from trainer.py
             self.fusionset = trainer.fusionset
             model.eval()
         else:
@@ -173,6 +174,7 @@ class BaseValidator:
             # Preprocess
             with dt[0]:
                 batch = self.preprocess(batch)
+                # add fusion tensor into batch
                 batch = self._setup_fusion_img(batch, self.fusionset)
                 batch = self._fusion_process(batch)
             # Inference
