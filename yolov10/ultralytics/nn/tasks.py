@@ -96,7 +96,11 @@ class BaseModel(nn.Module):
                 assert isinstance(x2, torch.Tensor), "x2 is not a valid Tensor"
                 assert isinstance(x.get('img'), torch.Tensor), "x['img'] is not a valid Tensor"
                 if torch.equal(x2, x['img']) or x2 ==None:
+                    if "fusion_tensor" not in x or x['fusion_tensor'] is None:
+                        print("[WARNING] fusion_tensor is missing or None. Cloning x as fallback.")
+                        x2 = x['img'].clone()
                     x2 = x['fusion_tensor']
+               
 
         except Exception as e:
             print(f"❗ Exception caught: {e}")
@@ -127,7 +131,7 @@ class BaseModel(nn.Module):
             return self._predict_augment(x,x2)
         return self._predict_once(x,x2, profile, visualize, embed)
 
-    def _predict_once(self, x, x2=None, profile=False, visualize=False, embed=None):
+    def _predict_once(self, x, x2, profile=False, visualize=False, embed=None):
         """
         Perform a forward pass through the network.
 
@@ -149,9 +153,10 @@ class BaseModel(nn.Module):
             if profile:
                 self._profile_one_layer(m, x, dt)
             if isinstance(m, MultiConv):
-                if x2 == None:
-                    if not isinstance(x, dict):
-                        print("test state clone x as x2")
+               
+                if x2 is None or not isinstance(x2, torch.Tensor) or x2.nelement() == 0:
+                    print(x2)
+                    print("test state clone x as x2 (due to invalid x2)")
                     x2 = x.clone()
                 x = m(x, x2)
             else:
@@ -656,7 +661,7 @@ class WorldModel(DetectionModel):
                 txt_feats = m(x, txt_feats)
             elif isinstance(m, MultiConv):
                 if x2 is None:
-                    x2 = x.clone()
+                    x2 = x["fusion_tensor"]
                 x = m(x, x2)
             else:
                 x = m(x)  # run

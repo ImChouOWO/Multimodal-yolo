@@ -23,7 +23,7 @@ Usage - formats:
 import json
 import time
 from pathlib import Path
-
+import os
 import numpy as np
 import torch
 
@@ -92,7 +92,7 @@ class BaseValidator:
         self.iouv = None
         self.jdict = None
         self.speed = {"preprocess": 0.0, "inference": 0.0, "loss": 0.0, "postprocess": 0.0}
-
+        self.fusionset = None
         self.save_dir = save_dir or get_save_dir(self.args)
         (self.save_dir / "labels" if self.args.save_txt else self.save_dir).mkdir(parents=True, exist_ok=True)
         if self.args.conf is None:
@@ -118,6 +118,7 @@ class BaseValidator:
             # self.model = model
             self.loss = torch.zeros_like(trainer.loss_items, device=trainer.device)
             self.args.plots &= trainer.stopper.possible_stop or (trainer.epoch == trainer.epochs - 1)
+            self.fusionset = trainer.fusionset
             model.eval()
         else:
             callbacks.add_integration_callbacks(self)
@@ -172,10 +173,11 @@ class BaseValidator:
             # Preprocess
             with dt[0]:
                 batch = self.preprocess(batch)
-
+                batch = self._setup_fusion_img(batch, self.fusionset)
+                batch = self._fusion_process(batch)
             # Inference
             with dt[1]:
-                preds = model(batch["img"], augment=augment)
+                preds = model(batch["img"],batch["fusion_tensor"], augment=augment)
 
 
             # Loss
@@ -223,6 +225,61 @@ class BaseValidator:
             if self.args.plots or self.args.save_json:
                 LOGGER.info(f"Results saved to {colorstr('bold', self.save_dir)}")
             return stats
+        
+    def _setup_fusion_img(self, batch, fusion_path):
+        """確保 batch["fusion_path"] 是一個列表，而不是單個字串"""
+        fusion_list = []
+        for file_path in batch["im_file"]:
+            file_name = os.path.basename(file_path)
+            fusion_image_path = os.path.join(fusion_path, file_name)
+
+            if os.path.exists(fusion_image_path):
+                fusion_list.append(fusion_image_path)
+            else:
+                print(f"❌ 找不到融合影像: {fusion_image_path}")  # Debug 訊息
+        
+        batch["fusion_path"] = fusion_list  # 確保是 list
+        
+        return batch
+    def _fusion_process(self, batch):
+        import cv2
+        from PIL import Image
+        import torchvision.transforms as T
+
+        # 定義 torchvision 變換 (與 batch["img"] 保持一致)
+        transform = T.Compose([
+            T.Resize((batch["img"].shape[-2], batch["img"].shape[-1])),
+            T.ToTensor(),  # 轉換為 PyTorch 張量
+        ])
+
+        # 確保 batch["fusion_path"] 為 list
+        if isinstance(batch["fusion_path"], str):
+            batch["fusion_path"] = [batch["fusion_path"]]
+
+        fusion_tensor_list = []
+
+        for img_path in batch["fusion_path"]:
+            img = cv2.imread(img_path)  # 讀取影像
+            if img is None:
+                print(f"❌ 找不到影像: {img_path}")
+                continue
+
+            img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))  # 轉換為 PIL 格式
+            img = transform(img)  # 轉換為張量 (C, H, W)
+            fusion_tensor_list.append(img)
+
+        if len(fusion_tensor_list) == 0:
+            raise RuntimeError("❌ 沒有可用的 fusion 影像，請檢查路徑是否正確！")
+
+        shapes = [img.shape for img in fusion_tensor_list]
+        if len(set(shapes)) > 1:
+            print("❌ 警告: fusion 影像大小不一致，調整所有影像大小！")
+            fusion_tensor_list = [T.Resize((batch["img"].shape[-2], batch["img"].shape[-1]))(img) for img in fusion_tensor_list]
+
+        # 將 List of Tensors 堆疊成 4D 張量 (B, C, H, W)
+        batch["fusion_tensor"] = torch.stack(fusion_tensor_list, dim=0)  
+        batch["fusion_tensor"] = batch["fusion_tensor"].to(self.device, non_blocking=True).float() / 255
+        return batch
 
     def match_predictions(self, pred_classes, true_classes, iou, use_scipy=False):
         """

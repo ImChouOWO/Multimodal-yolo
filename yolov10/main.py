@@ -21,7 +21,8 @@ if __name__ == '__main__':
 
     # # 開始訓練
     model.train(
-        data='C:/project/Multimodal-yolo/dataset/data.yaml',  # 路徑到您的數據集 YAML 文件
+        # data='C:/project/Multimodal-yolo/LLVIP/data.yaml',  # 路徑到您的數據集 YAML 文件
+        data ="C:/project/Multimodal-yolo/dataset/data.yaml",
         epochs=100,  # 訓練輪數
         batch=16,  # 批次大小（可根據需求調整）
         imgsz=512,  # 圖片尺寸

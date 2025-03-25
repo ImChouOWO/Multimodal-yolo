@@ -611,7 +611,7 @@ class BaseTrainer:
         """Allows custom preprocessing model inputs and ground truths depending on task type."""
         return batch
 
-    def validate(self):
+    def validate(self,x2=None):
         """
         Runs validation on test set using self.validator.
 
