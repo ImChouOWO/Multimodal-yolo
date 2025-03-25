@@ -624,7 +624,7 @@ class WorldModel(DetectionModel):
         """Initialize the loss criterion for the model."""
         raise NotImplementedError
 
-    def predict(self, x, profile=False, visualize=False, augment=False, embed=None):
+    def predict(self, x, x2=None, profile=False, visualize=False, augment=False, embed=None):
         """
         Perform a forward pass through the model.
 
@@ -654,6 +654,10 @@ class WorldModel(DetectionModel):
                 x = m(x, ori_txt_feats)
             elif isinstance(m, ImagePoolingAttn):
                 txt_feats = m(x, txt_feats)
+            elif isinstance(m, MultiConv):
+                if x2 is None:
+                    x2 = x.clone()
+                x = m(x, x2)
             else:
                 x = m(x)  # run
 
