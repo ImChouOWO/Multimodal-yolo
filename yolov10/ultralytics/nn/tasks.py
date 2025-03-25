@@ -155,8 +155,7 @@ class BaseModel(nn.Module):
             if isinstance(m, MultiConv):
                
                 if x2 is None or not isinstance(x2, torch.Tensor) or x2.nelement() == 0:
-                    print(x2)
-                    print("test state clone x as x2 (due to invalid x2)")
+                    print("\033[3;33m test state clone x as x2 (due to invalid x2) \033[0m")
                     x2 = x.clone()
                 x = m(x, x2)
             else:
