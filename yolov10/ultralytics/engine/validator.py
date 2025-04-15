@@ -143,6 +143,7 @@ class BaseValidator:
 
             if str(self.args.data).split(".")[-1] in ("yaml", "yml"):
                 self.data = check_det_dataset(self.args.data)
+                
             elif self.args.task == "classify":
                 self.data = check_cls_dataset(self.args.data, split=self.args.split)
             else:
@@ -154,7 +155,6 @@ class BaseValidator:
                 self.args.rect = False
             self.stride = model.stride  # used in get_dataloader() for padding
             self.dataloader = self.dataloader or self.get_dataloader(self.data.get(self.args.split), self.args.batch)
-
             model.eval()
             model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))  # warmup
 
@@ -175,6 +175,7 @@ class BaseValidator:
             with dt[0]:
                 batch = self.preprocess(batch)
                 # add fusion tensor into batch
+                self.fusionset = self.data.get("fusion", None)
                 batch = self._setup_fusion_img(batch, self.fusionset)
                 batch = self._fusion_process(batch)
             # Inference
@@ -189,7 +190,12 @@ class BaseValidator:
 
             # Postprocess
             with dt[3]:
+                if isinstance(preds, dict) and "one2one" in preds:
+                    preds = preds["one2one"]
+                else:
+                    raise ValueError(f"❌ `preds` 格式錯誤，找不到 'one2one'，實際 keys: {list(preds.keys())}")
                 preds = self.postprocess(preds)
+
 
             self.update_metrics(preds, batch)
             if self.args.plots and batch_i < 3:
